@@ -461,7 +461,7 @@ GLMeshRenderer::updateView()
 void
 GLMeshRenderer::setCamera(Camera* camera)
 {
-  if (camera != _camera)
+  if (camera != _camera.get())
     (_camera = nullptr != camera ? camera : new Camera{})->update();
 }
 

@@ -35,67 +35,65 @@
 namespace cg
 { // begin namespace cg
 
+  /////////////////////////////////////////////////////////////////////
+  //
+  // Renderer implementation
+  // ========
+  Renderer::Renderer(SceneBase &scene, Camera &camera) : _scene{&scene},
+                                                         _camera{&camera}
+  {
+    // do nothing
+  }
 
-/////////////////////////////////////////////////////////////////////
-//
-// Renderer implementation
-// ========
-Renderer::Renderer(SceneBase& scene, Camera& camera):
-  _scene{&scene},
-  _camera{&camera}
-{
-  // do nothing
-}
+  void
+  Renderer::setScene(SceneBase &scene)
+  {
+    if (&scene != _scene.get())
+      _scene = &scene;
+  }
 
-void
-Renderer::setScene(SceneBase& scene)
-{
-  if (&scene != _scene)
-    _scene = &scene;
-}
+  void
+  Renderer::setCamera(Camera &camera)
+  {
+    if (&camera != _camera.get())
+      _camera = &camera;
+  }
 
-void
-Renderer::setCamera(Camera& camera)
-{
-  if (&camera != _camera)
-    _camera = &camera;
-}
+  void
+  Renderer::setImageSize(int w, int h)
+  {
+    _viewport.w = w;
+    _viewport.h = h;
+    _camera->setAspectRatio((float)(w) / (float)(h));
+  }
 
-void
-Renderer::setImageSize(int w, int h)
-{
-  _viewport.w = w;
-  _viewport.h = h;
-  _camera->setAspectRatio((float)(w) / (float)(h));
-}
+  void
+  Renderer::update()
+  {
+    // do nothing
+  }
 
-void
-Renderer::update()
-{
-  // do nothing
-}
+  vec3f
+  Renderer::project(const vec3f &p) const
+  {
+    // TODO: consider viewport origin
+    auto w = normalize(vpMatrix(_camera) * vec4f{p, 1});
 
-vec3f
-Renderer::project(const vec3f& p) const
-{
-  // TODO: consider viewport origin
-  auto w = normalize(vpMatrix(_camera) * vec4f{p, 1});
+    w.x = (w.x * 0.5f + 0.5f) * _viewport.w;
+    w.y = (w.y * 0.5f + 0.5f) * _viewport.h;
+    w.z = (w.z * 0.5f + 0.5f);
+    return w;
+  }
 
-  w.x = (w.x * 0.5f + 0.5f) * _viewport.w;
-  w.y = (w.y * 0.5f + 0.5f) * _viewport.h;
-  w.z = (w.z * 0.5f + 0.5f);
-  return w;
-}
+  vec3f
+  Renderer::unproject(const vec3f &w) const
+  {
+    // TODO: consider viewport origin
+    vec3f p{w.x / _viewport.w * 2 - 1, w.y / _viewport.h * 2 - 1, w.z * 2 - 1};
+    mat4f m{vpMatrix(_camera)};
 
-vec3f
-Renderer::unproject(const vec3f& w) const
-{
-  // TODO: consider viewport origin
-  vec3f p{w.x / _viewport.w * 2 - 1, w.y / _viewport.h * 2 - 1, w.z * 2 - 1};
-  mat4f m{vpMatrix(_camera)};
-
-  m.invert();
-  return normalize(m * vec4f{p, 1});
-}
+    m.invert();
+    return normalize(m *vec4f{p, 1});
+  }
 
 } // end namespace cg
