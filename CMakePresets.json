@@ -8,8 +8,8 @@
     "configurePresets": [
         {
             "name": "msvc",
-            "displayName": "Default MSVC",
-            "description": "Default MSVC Build configuration",
+            "displayName": "MSVC build of Ds library",
+            "description": "Default MSVC Build configuration including the app directory",
             "generator": "Visual Studio 17 2022",
             "binaryDir": "${sourceDir}/build",
             "architecture": {

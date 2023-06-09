@@ -1,53 +1,7 @@
 cmake_minimum_required(VERSION 3.25)
 project(Ds LANGUAGES CXX CUDA C)
 
-set(cg_glfw_header_files 
-    cg/externals/include/GL/gl3w.h
-    cg/externals/include/GL/glcorearb.h
-    cg/externals/include/GLFW/glfw3.h
-    cg/externals/include/GLFW/glfw3native.h
-    cg/externals/include/KHR/khrplatform.h
-)
-
-set(cg_glfw_source_files
-    cg/externals/src/gl3w.c
-)
-
-set(cg_imgui_header_files
-    cg/externals/include/imconfig.h
-    cg/externals/include/imgui_impl_glfw.h
-    cg/externals/include/imgui_impl_opengl3_loader.h
-    cg/externals/include/imgui_impl_opengl3.h
-    cg/externals/include/imgui_internal.h
-    cg/externals/include/imgui.h
-    cg/externals/include/imstb_rectpack.h
-    cg/externals/include/imstb_textedit.h
-    cg/externals/include/imstb_truetype.h
-)
-
-set(cg_imgui_source_files
-    cg/externals/src/imgui_draw.cpp
-    cg/externals/src/imgui_widgets.cpp
-    cg/externals/src/imgui_impl_glfw.cpp
-    cg/externals/src/imgui_impl_opengl3.cpp
-    cg/externals/src/imgui_tables.cpp
-    cg/externals/src/imgui_widgets.cpp
-    cg/externals/src/imgui.cpp
-)
-
-set(cg_externals_include_dir "${CMAKE_CURRENT_SOURCE_DIR}/cg/externals/include/")
-
-add_library(cg_glfw STATIC ${cg_glfw_header_files} ${cg_glfw_source_files})
-target_include_directories(cg_glfw PUBLIC ${cg_externals_include_dir})
-set_target_properties(cg_glfw PROPERTIES CXX_EXTENSIONS OFF)
-target_compile_features(cg_glfw PRIVATE cxx_std_20)
-add_library(ds::glfw ALIAS cg_glfw)
-
-add_library(cg_imgui STATIC ${cg_imgui_header_files} ${cg_imgui_source_files})
-target_include_directories(cg_imgui PUBLIC ${cg_externals_include_dir})
-set_target_properties(cg_imgui PROPERTIES CXX_EXTENSIONS OFF)
-target_compile_features(cg_imgui PRIVATE cxx_std_20)
-add_library(ds::imgui ALIAS cg_imgui)
+include(cmake/externals.cmake)
 
 set(cg_header_files
     # core directory
@@ -233,5 +187,7 @@ add_library(ds_cg_lib STATIC ${cg_header_files} ${cg_source_files})
 target_include_directories(ds_cg_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/cg/include)
 set_target_properties(ds_cg_lib PROPERTIES CXX_EXTENSIONS OFF)
 target_compile_features(ds_cg_lib PRIVATE cxx_std_20)
-target_link_libraries(ds_cg_lib PRIVATE ds::glfw ds::imgui)
+target_link_libraries(ds_cg_lib PUBLIC glfw ds_imgui gl3w)
 add_library(ds::cg ALIAS ds_cg_lib)
+
+add_subdirectory(apps)
