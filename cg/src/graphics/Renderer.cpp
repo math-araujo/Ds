@@ -1,6 +1,6 @@
 //[]---------------------------------------------------------------[]
 //|                                                                 |
-//| Copyright (C) 2018, 2022 Paulo Pagliosa.                        |
+//| Copyright (C) 2018, 2023 Paulo Pagliosa.                        |
 //|                                                                 |
 //| This software is provided 'as-is', without any express or       |
 //| implied warranty. In no event will the authors be held liable   |
@@ -28,72 +28,74 @@
 // Source file for generic renderer.
 //
 // Author: Paulo Pagliosa
-// Last revision: 10/02/2022
+// Last revision: 09/06/2023
 
 #include "graphics/Renderer.h"
 
 namespace cg
 { // begin namespace cg
 
-  /////////////////////////////////////////////////////////////////////
-  //
-  // Renderer implementation
-  // ========
-  Renderer::Renderer(SceneBase &scene, Camera &camera) : _scene{&scene},
-                                                         _camera{&camera}
-  {
-    // do nothing
-  }
 
-  void
-  Renderer::setScene(SceneBase &scene)
-  {
-    if (&scene != _scene.get())
-      _scene = &scene;
-  }
+/////////////////////////////////////////////////////////////////////
+//
+// Renderer implementation
+// ========
+Renderer::Renderer(SceneBase& scene, Camera& camera):
+  _scene{&scene},
+  _camera{&camera}
+{
+  // do nothing
+}
 
-  void
-  Renderer::setCamera(Camera &camera)
-  {
-    if (&camera != _camera.get())
-      _camera = &camera;
-  }
+void
+Renderer::setScene(SceneBase& scene)
+{
+  if (&scene != _scene.get())
+    _scene = &scene;
+}
 
-  void
-  Renderer::setImageSize(int w, int h)
-  {
-    _viewport.w = w;
-    _viewport.h = h;
-    _camera->setAspectRatio((float)(w) / (float)(h));
-  }
+void
+Renderer::setCamera(Camera& camera)
+{
+  if (&camera != _camera.get())
+    _camera = &camera;
+}
 
-  void
-  Renderer::update()
-  {
-    // do nothing
-  }
+void
+Renderer::setImageSize(int w, int h)
+{
+  _viewport.w = w;
+  _viewport.h = h;
+  _camera->setAspectRatio((float)(w) / (float)(h));
+}
 
-  vec3f
-  Renderer::project(const vec3f &p) const
-  {
-    // TODO: consider viewport origin
-    auto w = normalize(vpMatrix(_camera) * vec4f{p, 1});
+void
+Renderer::update()
+{
+  // do nothing
+}
 
-    w.x = (w.x * 0.5f + 0.5f) * _viewport.w;
-    w.y = (w.y * 0.5f + 0.5f) * _viewport.h;
-    w.z = (w.z * 0.5f + 0.5f);
-    return w;
-  }
+vec3f
+Renderer::project(const vec3f& p) const
+{
+  // TODO: consider viewport origin
+  auto w = normalize(vpMatrix(_camera) * vec4f{p, 1});
 
-  vec3f
-  Renderer::unproject(const vec3f &w) const
-  {
-    // TODO: consider viewport origin
-    vec3f p{w.x / _viewport.w * 2 - 1, w.y / _viewport.h * 2 - 1, w.z * 2 - 1};
-    mat4f m{vpMatrix(_camera)};
+  w.x = (w.x * 0.5f + 0.5f) * _viewport.w;
+  w.y = (w.y * 0.5f + 0.5f) * _viewport.h;
+  w.z = (w.z * 0.5f + 0.5f);
+  return w;
+}
 
-    m.invert();
-    return normalize(m *vec4f{p, 1});
-  }
+vec3f
+Renderer::unproject(const vec3f& w) const
+{
+  // TODO: consider viewport origin
+  vec3f p{w.x / _viewport.w * 2 - 1, w.y / _viewport.h * 2 - 1, w.z * 2 - 1};
+  mat4f m{vpMatrix(_camera)};
+
+  m.invert();
+  return normalize(m * vec4f{p, 1});
+}
 
 } // end namespace cg
