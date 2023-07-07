@@ -32,44 +32,44 @@
 
 #include "graph/CameraProxy.h"
 #include "graph/Transform.h"
+#include "graph/SceneObject.h"
 #include <cassert>
 
 namespace cg::graph
 { // begin namespace cg::graph
 
+  /////////////////////////////////////////////////////////////////////
+  //
+  // CameraProxy implementation
+  // ===========
+  Camera *CameraProxy::_current;
 
-/////////////////////////////////////////////////////////////////////
-//
-// CameraProxy implementation
-// ===========
-Camera* CameraProxy::_current;
+  CameraProxy::~CameraProxy()
+  {
+    if (camera() == _current)
+      _current = nullptr;
+  }
 
-CameraProxy::~CameraProxy()
-{
-  if (camera() == _current)
-    _current = nullptr;
-}
+  void
+  CameraProxy::transformChanged()
+  {
+    auto t = transform();
 
-void
-CameraProxy::transformChanged()
-{
-  auto t = transform();
+    assert(t->changed());
+    _object->setTransform(t->position(), t->rotation());
+  }
 
-  assert(t->changed());
-  _object->setTransform(t->position(), t->rotation());
-}
+  void
+  CameraProxy::reset(float aspect)
+  {
+    _object->setDefaultView(aspect);
+  }
 
-void
-CameraProxy::reset(float aspect)
-{
-  _object->setDefaultView(aspect);
-}
-
-void
-CameraProxy::setCurrent(Camera* camera)
-{
-  if (camera != _current)
-    _current = camera;
-}
+  void
+  CameraProxy::setCurrent(Camera *camera)
+  {
+    if (camera != _current)
+      _current = camera;
+  }
 
 } // end namespace cg::graph
