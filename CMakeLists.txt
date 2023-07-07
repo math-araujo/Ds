@@ -75,6 +75,7 @@ set(cg_header_files
     cg/include/graphics/Actor.h
     cg/include/graphics/Application.h
     cg/include/graphics/Assets.h
+    cg/include/graphics/AssetFolder.h
     cg/include/graphics/Camera.h
     cg/include/graphics/Color.h
     cg/include/graphics/GLBuffer.h
@@ -151,6 +152,7 @@ set(cg_source_files
     # graphics directory
     cg/src/graphics/Application.cpp
     cg/src/graphics/Assets.cpp
+    cg/src/graphics/AssetFolder.cpp
     cg/src/graphics/Camera.cpp
     cg/src/graphics/Color.cpp
     cg/src/graphics/GLFramebuffer.cpp
@@ -190,4 +192,6 @@ target_compile_features(ds_cg_lib PRIVATE cxx_std_20)
 target_link_libraries(ds_cg_lib PUBLIC glfw ds_imgui gl3w)
 add_library(ds::cg ALIAS ds_cg_lib)
 
-add_subdirectory(apps)
+if (CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
+    add_subdirectory(apps)
+endif()
