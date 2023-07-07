@@ -1,6 +1,6 @@
 //[]---------------------------------------------------------------[]
 //|                                                                 |
-//| Copyright (C) 2022 Paulo Pagliosa.                              |
+//| Copyright (C) 2022, 2023 Paulo Pagliosa.                        |
 //|                                                                 |
 //| This software is provided 'as-is', without any express or       |
 //| implied warranty. In no event will the authors be held liable   |
@@ -28,13 +28,13 @@
 // Class definition for cg demo main window.
 //
 // Author: Paulo Pagliosa
-// Last revision: 22/07/2022
+// Last revision: 06/07/2023
 
 #ifndef __MainWindow_h
 #define __MainWindow_h
 
 #include "graph/SceneWindow.h"
-#include "graphics/Assets.h"
+#include "graphics/AssetFolder.h"
 #include "graphics/GLImage.h"
 #include "RayTracer.h"
 
@@ -65,6 +65,7 @@ public:
   }
 
 private:
+  AssetFolderRef _sceneFolder;
   Reference<RayTracer> _rayTracer;
   Reference<GLImage> _image;
   int _maxRecursionLevel{6};
@@ -85,10 +86,10 @@ private:
   void beginInitialize() override;
   void initializeScene() override;
   void renderScene() override;
-  Component* addComponentMenu() override;
-  void createObjectMenu() override;
-  bool onResize(int width, int height) override;
   void gui() override;
+  bool onResize(int width, int height) override;
+  Component* addComponentMenu(const SceneObject&) override;
+  void createObjectMenu() override;
 
   void mainMenu();
   void fileMenu();
@@ -96,6 +97,7 @@ private:
   void showOptions();
 
   void readScene(const std::string& filename);
+  void openSceneCommand();
 
   static void buildDefaultMeshes();
 

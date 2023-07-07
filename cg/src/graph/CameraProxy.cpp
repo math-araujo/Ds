@@ -1,6 +1,6 @@
 //[]---------------------------------------------------------------[]
 //|                                                                 |
-//| Copyright (C) 2022 Paulo Pagliosa.                              |
+//| Copyright (C) 2022, 2023 Paulo Pagliosa.                        |
 //|                                                                 |
 //| This software is provided 'as-is', without any express or       |
 //| implied warranty. In no event will the authors be held liable   |
@@ -32,12 +32,10 @@
 
 #include "graph/CameraProxy.h"
 #include "graph/Transform.h"
+#include <cassert>
 
-namespace cg
-{ // begin namespace cg
-
-namespace graph
-{ // begin namespace graph
+namespace cg::graph
+{ // begin namespace cg::graph
 
 
 /////////////////////////////////////////////////////////////////////
@@ -53,10 +51,12 @@ CameraProxy::~CameraProxy()
 }
 
 void
-CameraProxy::update()
+CameraProxy::transformChanged()
 {
-  if (auto t = transform(); t->changed)
-    _object->setTransform(t->position(), t->rotation());
+  auto t = transform();
+
+  assert(t->changed());
+  _object->setTransform(t->position(), t->rotation());
 }
 
 void
@@ -72,6 +72,4 @@ CameraProxy::setCurrent(Camera* camera)
     _current = camera;
 }
 
-} // end namespace graph
-
-} // end namespace cg
+} // end namespace cg::graph

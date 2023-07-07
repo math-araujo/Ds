@@ -23,32 +23,35 @@
 //|                                                                 |
 //[]---------------------------------------------------------------[]
 //
-// OVERVIEW: SceneWindowBase.cpp
+// OVERVIEW: SceneWindow.cpp
 // ========
 // Source file for generic graph scene window.
 //
 // Author: Paulo Pagliosa
-// Last revision: 12/05/2023
+// Last revision: 04/07/2023
 
 #include "graph/SceneWindow.h"
 #include "graphics/Assets.h"
 #include <cassert>
 
-namespace cg
-{ // begin namespace cg
-
-namespace graph
-{ // begin namespace graph
+namespace cg::graph
+{ // begin namespace cg::graph
 
 
 /////////////////////////////////////////////////////////////////////
 //
 // SceneWindow implementation
 // ===========
+Scene*
+SceneWindow::makeNewScene() const
+{
+  return Scene::New();
+}
+
 SceneBase*
 SceneWindow::makeScene()
 {
-  auto scene = Scene::New();
+  auto scene = makeNewScene();
 
   SceneObjectBuilder::setScene(*scene);
   _currentNode = scene;
@@ -388,9 +391,14 @@ SceneWindow::inspectPrimitive(SceneWindow&, TriangleMeshProxy& proxy)
     ImGui::EndPopup();
   }
   ImGui::Separator();
+  inspectMaterial(*proxy.mapper()->primitive());
+  proxy.actor()->visible = proxy.sceneObject()->visible();
+}
 
-  auto primitive = proxy.mapper()->primitive();
-  auto material = primitive->material();
+void
+SceneWindow::inspectMaterial(Primitive& primitive)
+{
+  auto material = primitive.material();
 
   ImGui::inputText("Material", material->name());
   if (ImGui::BeginDragDropTarget())
@@ -400,16 +408,15 @@ SceneWindow::inspectPrimitive(SceneWindow&, TriangleMeshProxy& proxy)
       auto mit = *(MaterialMapIterator*)payload->Data;
 
       assert(mit->second != nullptr);
-      primitive->setMaterial(material = mit->second);
+      primitive.setMaterial(material = mit->second);
     }
     ImGui::EndDragDropTarget();
   }
-  inspectMaterial(*material);
-  proxy.actor()->visible = proxy.sceneObject()->visible();
+  SceneWindowBase::inspectMaterial(*material);
 }
 
 Component*
-SceneWindow::addComponentMenu()
+SceneWindow::addComponentMenu(const SceneObject&)
 {
   return nullptr;
 }
@@ -423,7 +430,7 @@ SceneWindow::addComponentButton(SceneObject& object)
     ImGui::OpenPopup("AddComponentPopup");
   if (ImGui::BeginPopup("AddComponentPopup"))
   {
-    auto component = addComponentMenu();
+    auto component = addComponentMenu(object);
 
     if (ImGui::MenuItem("Light"))
       component = LightProxy::New();
@@ -495,30 +502,8 @@ SceneWindow::inspectorWindow(const char* title)
 }
 
 void
-SceneWindow::assetsWindow()
+SceneWindow::materialPanel()
 {
-  if (!_showAssets)
-    return;
-  ImGui::Begin("Assets");
-  if (ImGui::CollapsingHeader("Meshes"))
-  {
-    auto& meshes = Assets::meshes();
-
-    for (auto mit = meshes.begin(); mit != meshes.end(); ++mit)
-    {
-      auto name = mit->first.c_str();
-      auto selected = false;
-
-      ImGui::Selectable(name, &selected);
-      if (ImGui::BeginDragDropSource())
-      {
-        ImGui::Text(name);
-        ImGui::SetDragDropPayload("TriangleMesh", &mit, sizeof(mit));
-        ImGui::EndDragDropSource();
-      }
-    }
-  }
-  ImGui::Separator();
   if (ImGui::CollapsingHeader("Materials"))
   {
     auto& materials = Assets::materials();
@@ -537,7 +522,37 @@ SceneWindow::assetsWindow()
       }
     }
   }
-  ImGui::End();
+}
+
+void
+SceneWindow::meshPanel()
+{
+  if (ImGui::CollapsingHeader("Meshes"))
+  {
+    auto& meshes = Assets::meshes();
+
+    for (auto mit = meshes.begin(); mit != meshes.end(); ++mit)
+    {
+      auto name = mit->first.c_str();
+      auto selected = false;
+
+      ImGui::Selectable(name, &selected);
+      if (ImGui::BeginDragDropSource())
+      {
+        ImGui::Text(name);
+        ImGui::SetDragDropPayload("TriangleMesh", &mit, sizeof(mit));
+        ImGui::EndDragDropSource();
+      }
+    }
+  }
+}
+
+void
+SceneWindow::assetPanels()
+{
+  materialPanel();
+  ImGui::Separator();
+  meshPanel();
 }
 
 SceneObject*
@@ -552,18 +567,12 @@ SceneWindow::pickObject(SceneObject* object, const Ray3f& ray, float& t) const
     if (auto proxy = dynamic_cast<PrimitiveProxy*>(&*component))
     {
       auto p = proxy->mapper()->primitive();
+      Intersection hit;
 
-      if (p->bounds().size().min() == 0)
-        puts("Unable to pick scene object");
-      else
+      if (p->intersect(ray, hit) && hit.distance < t)
       {
-        Intersection hit;
-
-        if (p->intersect(ray, hit) && hit.distance < t)
-        {
-          t = hit.distance;
-          nearest = object;
-        }
+        t = hit.distance;
+        nearest = object;
       }
       break;
     }
@@ -583,7 +592,7 @@ SceneWindow::pickObject(int x, int y) const
 }
 
 bool
-SceneWindow::onPickObject(int x, int y)
+SceneWindow::onMouseLeftPress(int x, int y)
 {
   if (auto o = pickObject(x, y))
     if (o->selectable())
@@ -597,7 +606,7 @@ SceneWindow::onPickObject(int x, int y)
 }
 
 bool
-SceneWindow::onPressKey(int key)
+SceneWindow::onKeyPress(int key, int)
 {
   if (_viewMode != ViewMode::Editor || key != GLFW_KEY_F)
     return false;
@@ -614,6 +623,4 @@ SceneWindow::onPressKey(int key)
   return true;
 }
 
-} // end namespace graph
-
-} // end namespace cg
+} // end namespace cg::graph

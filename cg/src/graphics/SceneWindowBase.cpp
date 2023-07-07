@@ -28,7 +28,7 @@
 // Source file for scene window base.
 //
 // Author: Paulo Pagliosa
-// Last revision: 28/04/2023
+// Last revision: 04/07/2023
 
 #include "graphics/Renderer.h"
 #include "graphics/SceneWindowBase.h"
@@ -81,6 +81,20 @@ showStyleSelector(const char* label)
   return true;
 }
 
+void
+tooltip(const char* msg)
+{
+  TextDisabled("(?)");
+  if (IsItemHovered())
+  {
+    BeginTooltip();
+    PushTextWrapPos(GetFontSize() * 35.0f);
+    TextUnformatted(msg);
+    PopTextWrapPos();
+    EndTooltip();
+  }
+}
+
 } // end namespace ImGui
 
 namespace cg
@@ -109,6 +123,7 @@ SceneWindowBase::initialize()
   glEnable(GL_POLYGON_OFFSET_FILL);
   glPolygonOffset(1.0f, 1.0f);
   glEnable(GL_LINE_SMOOTH);
+  glEnable(GL_MULTISAMPLE);
   endInitialize();
   initializeScene();
 }
@@ -164,7 +179,7 @@ SceneWindowBase::onResize(int width, int height)
 }
 
 bool
-SceneWindowBase::onPickObject(int x, int y)
+SceneWindowBase::onMouseLeftPress(int x, int y)
 {
   (void)x;
   (void)y;
@@ -172,9 +187,10 @@ SceneWindowBase::onPickObject(int x, int y)
 }
 
 bool
-SceneWindowBase::onPressKey(int key)
+SceneWindowBase::onKeyPress(int key, int mods)
 {
   (void)key;
+  (void)mods;
   return false;
 }
 
@@ -327,7 +343,7 @@ SceneWindowBase::mouseButtonInputEvent(int button, int actions, int mods)
 
   cursorPosition(_mouse.px, _mouse.py);
   if (button == GLFW_MOUSE_BUTTON_LEFT && !active)
-    return onPickObject(_mouse.px, _mouse.py);
+    return onMouseLeftPress(_mouse.px, _mouse.py);
   if (button == GLFW_MOUSE_BUTTON_RIGHT)
     _dragFlags.enable(DragBits::Rotate, active);
   else if (button == GLFW_MOUSE_BUTTON_MIDDLE)
@@ -397,7 +413,7 @@ SceneWindowBase::keyInputEvent(int key, int action, int mods)
       d.y -= delta;
       break;
     default:
-      return onPressKey(key);
+      return onKeyPress(key, mods);
   }
   _editor->pan(d);
   return true;

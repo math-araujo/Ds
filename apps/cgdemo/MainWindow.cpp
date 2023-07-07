@@ -28,9 +28,10 @@
 // Source file for cg demo main window.
 //
 // Author: Paulo Pagliosa
-// Last revision: 12/05/2023
+// Last revision: 06/07/2023
 
 #include "graphics/Application.h"
+#include "graphics/AssetFolder.h"
 #include "reader/SceneReader.h"
 #include "MainWindow.h"
 
@@ -48,7 +49,7 @@ MainWindow::buildDefaultMeshes()
   _defaultMeshes["Sphere"] = GLGraphics3::sphere();
   _defaultMeshes["Cylinder"] = GLGraphics3::cylinder();
   _defaultMeshes["Cone"] = GLGraphics3::cone();
-  //_defaultMeshes["Plane"] = GLGraphics3::quad();
+  _defaultMeshes["Plane"] = GLGraphics3::quad();
 }
 
 void
@@ -66,14 +67,14 @@ MainWindow::initializeScene()
 void
 MainWindow::beginInitialize()
 {
-  Assets::initialize();
-  buildDefaultMeshes();
-  Assets::meshes().insert(_defaultMeshes.begin(), _defaultMeshes.end());
-
   constexpr auto ffn = "fonts/Roboto-Regular.ttf";
   auto fonts = ImGui::GetIO().Fonts;
 
   fonts->AddFontFromFileTTF(Application::assetFilePath(ffn).c_str(), 16);
+  buildDefaultMeshes();
+  Assets::initialize();
+  Assets::meshes().insert(_defaultMeshes.begin(), _defaultMeshes.end());
+  _sceneFolder = AssetFolder::New("scenes/", ".scn");
 }
 
 void
@@ -89,14 +90,14 @@ MainWindow::createObjectMenu()
       createDefaultPrimitiveObject("Cylinder");
     if (ImGui::MenuItem("Cone"))
       createDefaultPrimitiveObject("Cone");
-    //if (ImGui::MenuItem("Plane"))
-      //createDefaultPrimitiveObject("Plane");
+    if (ImGui::MenuItem("Plane"))
+      createDefaultPrimitiveObject("Plane");
     ImGui::EndMenu();
   }
 }
 
 Component*
-MainWindow::addComponentMenu()
+MainWindow::addComponentMenu(const SceneObject&)
 {
   Component* component = nullptr;
 
@@ -110,29 +111,44 @@ MainWindow::addComponentMenu()
       component = makeDefaultPrimitive("Cylinder");
     if (ImGui::MenuItem("Cone"))
       component = makeDefaultPrimitive("Cone");
-    //if (ImGui::MenuItem("Plane"))
-      //component = makeDefaultPrimitive("Plane");
+    if (ImGui::MenuItem("Plane"))
+      component = makeDefaultPrimitive("Plane");
     ImGui::EndMenu();
   }
   return component;
 }
 
 void
-MainWindow::readScene(const std::string& filename)
+MainWindow::openSceneCommand()
 {
-  try
+  if (ImGui::BeginListBox("##SceneList",
+    ImVec2{180, 8 * ImGui::GetTextLineHeightWithSpacing()}))
   {
-    parser::SceneReader reader;
+    for (auto& file : _sceneFolder->files())
+      if (ImGui::Selectable(file->filename().c_str()))
+      {
+        auto filename = (_sceneFolder->path() / file->name()).string();
 
-    reader.setInput(filename);
-    reader.execute();
-    if (reader.scene() != nullptr)
-      SceneWindow::setScene(*reader.scene());
+        readScene(filename);
+        ImGui::CloseCurrentPopup();
+      }
+    ImGui::EndListBox();
   }
-  catch (const std::exception& e)
-  {
-    puts(e.what());
-  }
+}
+
+void
+MainWindow::readScene(const std::string& filename) try
+{
+  util::SceneReader reader;
+
+  reader.setInput(filename);
+  reader.execute();
+  if (reader.scene() != nullptr)
+    SceneWindow::setScene(*reader.scene());
+}
+catch (const std::exception& e)
+{
+  puts(e.what());
 }
 
 inline void
@@ -144,9 +160,7 @@ MainWindow::fileMenu()
       newScene();
     if (ImGui::BeginMenu("Open"))
     {
-      // TODO
-      if (ImGui::MenuItem("test.scn"))
-        readScene(Application::assetFilePath("scenes/test.scn"));
+      openSceneCommand();
       ImGui::EndMenu();
     }
     ImGui::Separator();
@@ -275,7 +289,7 @@ MainWindow::gui()
   // Assets Window
   ImGui::SetNextWindowPos({rgt, awy});
   ImGui::SetNextWindowSize({iww, awh});
-  assetsWindow();
+  assetWindow();
 }
 
 void
